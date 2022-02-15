@@ -87,7 +87,7 @@ class WB_Spectrum(Screen):
       [[10493250,1000,150],[10494750,1000,150],[10496250,1000,150]],\
       [[10491500,1500,160]]\
     ]
-    self.channelRow = [[382,6],[390,6],[398,6],[406,6],[390,18]]
+    self.channelRow = [[390,6],[398,6],[406,6],[414,6],[390,18]]
     self.bbox()
 
   def bbox(self):
@@ -121,7 +121,6 @@ class WB_Spectrum(Screen):
     self.updateSpectrumTimer.callback.append(self.drawSpectrum)
     self.updateSpectrumTimer.start(3000)
 
-
   def drawChannel(self, canvas, ch, rw, color):
     x = self.channelTablePlaces[ch[0]]
     canvas.fill(x-int(ch[2]/2),self.channelRow[rw][0], ch[2], self.channelRow[rw][1], color)
@@ -142,7 +141,7 @@ class WB_Spectrum(Screen):
     if self.currentChannel[1] > 0:
       self.currentChannel[1] -= 1
     else:
-      self.currentChannel[0] = 5
+      self.currentChannel[0] = 4
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
   
   def channel_right(self):
@@ -152,7 +151,7 @@ class WB_Spectrum(Screen):
     if (self.currentChannel[1] > 12): 
           self.currentChannel[1] = 0
     else:
-      if self.currentChannel[0] == 5:
+      if self.currentChannel[0] == 4:
         self.currentChannel[0] = 0
         self.currentChannel[1] = 0
       else:
@@ -164,19 +163,26 @@ class WB_Spectrum(Screen):
     sc = RGB(255,255,0)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
     if self.currentChannel[0] > 0:
+      if self.currentChannel[0] == 3:
+        self.currentChannel[1] = 3*self.currentChannel[1]+1
       self.currentChannel[0] -= 1
-    else:
-      self.currentChannel[0] = 3
+    #else:
+      #self.currentChannel[0] = 3
+      #self.currentChannel[1] = int(self.currentChannel[1]/3)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
   
   def channel_down(self):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
-    if (self.currentChannel[0] > 2): 
-          self.currentChannel[0] = 0
+    if self.currentChannel[1] > 8:
+      if (self.currentChannel[0] < 2): 
+        self.currentChannel[0] += 1
     else:
-      self.currentChannel[0] += 1
+      if (self.currentChannel[0] < 3): 
+        self.currentChannel[0] += 1
+        if self.currentChannel[0] == 3:
+          self.currentChannel[1] = int(self.currentChannel[1]/3)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
 
     
