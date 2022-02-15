@@ -7,5 +7,5 @@ You can use the arrow keys to select the transmission you would like to tune. Th
 Please see the picture below
 <IMG SRC="qo100_plugin.jpeg">
   
-#Credits
+### Credits
   Burcu Aybak Dinc (OH2CAV/TA2NBA)
