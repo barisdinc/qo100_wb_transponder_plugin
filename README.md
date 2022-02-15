@@ -6,3 +6,6 @@ You will see the tramsnitting stations on the spectrum. Top left one is the QO-1
 You can use the arrow keys to select the transmission you would like to tune. The selected transmission (channel) will be highlighted with yellow boc on the bottom of the spectrum displa.
 Please see the picture below
 <IMG SRC="qo100_plugin.jpeg">
+  
+#Credits
+  Burcu Aybak Dinc (OH2CAV/TA2NBA)
