@@ -41,16 +41,10 @@ class WB_Spectrum(Screen):
     <widget name="myLeftBtn" position="450,440" size="100,40" backgroundColor="black" valign="center" halign="center" zPosition="2" foregroundColor="white" font="Regular;20"/>
     <widget name="myRightBtn" position="560,440" size="100,40" backgroundColor="black" valign="center" halign="center" zPosition="2" foregroundColor="white" font="Regular;20"/>
     </screen>"""
-#    <widget name="myTuner" position="10,400" valign="center" size="320,40" font="Regular;20"/>
-#    <widget name="myBand" position="340,400" valign="center" size="100,40" font="Regular;20"/>
-#    <widget name="myFrequency" position="450,400" valign="center" size="600,40" font="Regular;20"/>
-#    <widget name="myCallsign" position="800,440" size="300,40" backgroundColor="black" valign="center" halign="center" zPosition="2" foregroundColor="white" font="Regular;20"/>
   
   
   def __init__(self, session, args = None):
     self.marker = 0
-    #self.dvb = -1
-    #self.found = 0
     self.session = session
     #self.tunercount = len(nimmanager.nim_slots)
     #self.tuner = 0
@@ -85,15 +79,7 @@ class WB_Spectrum(Screen):
         
   
     self.channelTablePlaces = {10491500 : 170, 10492750 : 284,  10493000 : 310,  10493250 : 336,  10493500 : 362,  10493750 : 388,  10494000 : 414,  10494250 : 440,  10494500 : 466,  10494750 : 492,  10495000 : 518,  10495250 : 544,  10495500 : 570,  10495750 : 596,  10496000 : 622,  10496250 : 648,  10496500 : 674,  10496750 : 700,  10497000 : 726,  10497250 : 752,  10497500 : 778,  10497750 : 804,  10498000 : 830,  10498250 : 856,  10498500 : 882,  10498750 : 908,  10499000 : 934,  10499250 : 960}
-    #self.channelTable250  = [10492750,10493250,10493750,10494250,10494750,10495250,10495750,10496250,10496750,10497250,10497750,10498250,10498750,10499250]
-    #self.channelTable333  = [10492750,10493250,10493750,10494250,10494750,10495250,10495750,10496250,10496750,10497250,10497750,10498250,10498750,10499250]
-    #self.channelTable500  = [10492750,10493250,10493750,10494250,10494750,10495250,10495750,10496250,10496750,10497250,10497750,10498250,10498750,10499250]
-    #self.channelTable1000 = [10493250,10494750,10496250]
-    #self.channelTable1500 = [10491500]
-    #self.allChannels = [ self.channelTable250, self.channelTable333, self.channelTable500, self.channelTable1000, self.channelTable1500 ]
     self.currentChannel = [0, 0]    #this variable will hold the selected (painted) channel row, column
-    #self.previousChannel = [-1, -1]  #this variable will hold the revious (to be de-painted) channel row, column
-
     self.channelTable = [\
       [[10492750,250,25],[10493250,250,25],[10493750,250,25],[10494250,250,25],[10494750,250,25],[10495250,250,25],[10495750,250,25],[10496250,250,25],[10496750,250,25],[10497250,250,25],[10497750,250,25],[10498250,250,25],[10498750,250,25],[10499250,250,25]],\
       [[10492750,333,33],[10493250,333,33],[10493750,333,33],[10494250,333,33],[10494750,333,33],[10495250,333,33],[10495750,333,33],[10496250,333,33],[10496750,333,33],[10497250,333,33],[10497750,333,33],[10498250,333,33],[10498750,333,33],[10499250,333,33]],\
@@ -102,19 +88,7 @@ class WB_Spectrum(Screen):
       [[10491500,1500,160]]\
     ]
     self.channelRow = [[382,6],[390,6],[398,6],[406,6],[390,18]]
-
-
-    
     self.bbox()
-
-#  def snr_to_db(self, i):
-#    c = self["Canvas"]
-#    frq = self.frqtab[i]
-#    snr = self.snrtab[i] 
-#    width = self.srtab[i] /1600 
-#    if snr > 0:
-#      pos = snr * 4 / 25 
-#      c.fill((frq-10700)/2+50-(width/2), 360-pos, width, pos, RGB(0, 255, 0))
 
   def bbox(self):
     fg = RGB(255, 255, 255)
@@ -135,11 +109,6 @@ class WB_Spectrum(Screen):
     for i in range(9):
       c.writeText(73+104*i, 365, 60, 20, fg, bg, font, str(10491+i))
     c.writeText(960, 365, 50, 20, fg, bg, font, "MHz")
-    #if self.found > 0:
-#      for i in range(self.found):
-#        self.snr_to_db(i)
-#      c.fill((self.frqtab[self.marker]-10700)/2+50, 30, 2, 330, RGB(255, 0, 0)) # Marker
-#    c.fill((self.frqtab[self.marker]-10700)/2+50, 30, 2, 330, RGB(255, 0, 0)) # Marker
 
     for row,channelRows in enumerate(self.channelTable):
       for channel in channelRows:
@@ -147,81 +116,17 @@ class WB_Spectrum(Screen):
         self.drawChannel(c, channel, row, cc)
     #self.drawChannel(c, self.channelTable1500[0], 5, sc)
     self.drawChannel(c, self.channelTable[0][0], 0, sc)
-
-
-#    row = 0
-#    for channelRows in self.allChannels:
-#      for channel in channelRows:
-#        self.drawChannel(c, channel, row, cc)
-#      row += 1        
-#    #self.drawChannel(c, self.channelTable1500[0], 5, sc)
-#    self.drawChannel(c, self.channelTable250[0], 0, sc)
-      
-#    for i in self.channelTable250:
-#          x = self.channelTablePlaces[i]
-#          c.fill(x-12,390, 25, bh, cc)
-#    for i in self.channelTable333:
-#          x = self.channelTablePlaces[i]
-#          c.fill(x-16,398, 33, bh, cc)
-#    for i in self.channelTable500:
-#          x = self.channelTablePlaces[i]
-#          c.fill(x-25,406, 50, bh, cc)
-#    for i in self.channelTable1000:
-#          x = self.channelTablePlaces[i]
-#          c.fill(x-75,414, 150, bh, cc)
-#    for i in self.channelTable1500:
-#          x = self.channelTablePlaces[i]
-#          c.fill(x-100,400, 160, bh*3, sc)
     c.flush()
     self.updateSpectrumTimer = eTimer()
     self.updateSpectrumTimer.callback.append(self.drawSpectrum)
     self.updateSpectrumTimer.start(3000)
-    
-#    self.setMyTuner()
-#    self.setMyBand()
-#    self.setMyFrequency(self.marker)
 
 
   def drawChannel(self, canvas, ch, rw, color):
-    #sr_len = { 0 : 25, 1: 33, 2: 50, 3: 150, 4: 160 }
-#    if rw == 5:
-#          rw = 2
     x = self.channelTablePlaces[ch[0]]
     canvas.fill(x-int(ch[2]/2),self.channelRow[rw][0], ch[2], self.channelRow[rw][1], color)
     canvas.flush()
-          
 
-
-
-  def marker_up(self):
-    bg = RGB(0,0,0)
-    c = self["Canvas"]
-    if self.found > 0:
-      c.fill((self.frqtab[self.marker]-10700)/2+50, 30, 2, 330, bg)
-#      self.snr_to_db(self.marker)
-      self.marker += 1
-      if(self.marker >= self.found):
-        self.marker = 0
-#      self.snr_to_db(self.marker)
-      c.fill((self.frqtab[self.marker]-10700)/2+50, 30, 2, 330, RGB(255, 0, 0))
-      c.flush()
-#      self.setMyFrequency(self.marker)
-      
-  def marker_down(self):
-    bg = RGB(0,0,0)
-    c = self["Canvas"]
-    if self.found > 0:
-      c.fill((self.frqtab[self.marker]-10700)/2+50, 30, 2, 330, bg)
-#      self.snr_to_db(self.marker)
-      if(self.marker <= 0):
-        self.marker = self.found-1
-      else:
-        self.marker -= 1
-#      self.snr_to_db(self.marker)
-      c.fill((self.frqtab[self.marker]-10700)/2+50, 30, 2, 330, RGB(255, 0, 0))
-      c.flush()
-#      self.setMyFrequency(self.marker)
- 
   def clearCanvas(self):
     g = self["Graph"]    
     g.clear()
@@ -233,89 +138,51 @@ class WB_Spectrum(Screen):
   def channel_left(self):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
     if self.currentChannel[1] > 0:
       self.currentChannel[1] -= 1
     else:
-      self.currentChannel[1] = 13
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
+      self.currentChannel[0] = 5
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
   
   def channel_right(self):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
     if (self.currentChannel[1] > 12): 
           self.currentChannel[1] = 0
     else:
-      self.currentChannel[1] += 1
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
+      if self.currentChannel[0] == 5:
+        self.currentChannel[0] = 0
+        self.currentChannel[1] = 0
+      else:
+        self.currentChannel[1] += 1
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
 
   def channel_up(self):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
     if self.currentChannel[0] > 0:
       self.currentChannel[0] -= 1
     else:
       self.currentChannel[0] = 3
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
   
   def channel_down(self):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
     if (self.currentChannel[0] > 2): 
           self.currentChannel[0] = 0
     else:
       self.currentChannel[0] += 1
-    self.drawChannel(self["Canvas"], self.allChannels[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
+    self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
 
     
   def updateChannelColor(self, channel, color):
     pass
        
-   
-  #def setMyFrequency(self, i):
-  #  if self.found > 0:
-  #    frq = self.frqtab[i] 
-  #    string = "%d MHz" % frq
-  #    db = float(self.snrtab[i]) / 100
-  #    mod = self.modtab[i]
-  #    fec = self.fectab[i]
-  #    sr = self.srtab[i] 
-  #    system = self.systab[i] 
-  #    string = string + ", %2.1f dB, %d kBaud, " % (db,sr) + systemstr[system]
-  #    string = string + ", " + modstr[mod] + ", FEC " + fecstr[fec]  
-  #    self.text = string
-  #  else:
-  #    self.text = " "
-  #  self["myFrequency"].setText(self.text)
-
-  #def setMyTuner(self):
-  #  self.text = nimmanager.getNimDescription(self.tuner) 
-  #  self["myTuner"].setText(self.text)
-
-  #def changeTuner(self):
-  #  self.found = 0
-  #  self.marker = 0
-  #  self.tuner += 1
-  #  if self.tuner >= self.tunercount:
-  #    self.tuner = 0 
-  #  self.bbox()
-
-#  def setMyBand(self):
-#    if self.band==0:
-#      self.text = "Vertical"
-#    else: 
-#      self.text = "Horizontal"
-#    self["myBand"].setText(self.text)
-
-#  def changeBand(self):
-#    self.found = 0
-#    self.marker = 0
-#    self.band += 1
-#    self.band &= 1
-#    self.bbox()
   def drawSpectrum(self):
     gainScale = 140
     sp = RGB(0,200,0)
