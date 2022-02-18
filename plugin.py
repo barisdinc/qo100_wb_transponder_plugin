@@ -6,11 +6,16 @@ from Screens.Screen import Screen
 from Components.Sources.CanvasSource import CanvasSource
 from Components.Label import Label
 from Components.ActionMap import ActionMap
-#from Components.NimManager import nimmanager
+from Components.NimManager import nimmanager
 from Plugins.Plugin import PluginDescriptor
 from enigma import gFont, eTimer
 from enigma import RT_HALIGN_RIGHT
+from Components.TuneTest import Tuner
+from Screens.ServiceScan import ServiceScan
+from Screens.ScanSetup import ScanSetup, buildTerTransponder
+from enigma import eDVBResourceManager, eDVBFrontendParametersSatellite, eDVBFrontendParametersTerrestrial, eDVBFrontendParametersATSC, iDVBFrontend
 
+    
 from websocket import create_connection
 
 def RGB(r,g,b):
@@ -47,15 +52,12 @@ class WB_Spectrum(Screen):
     self.marker = 0
     self.session = session
     #self.tunercount = len(nimmanager.nim_slots)
-    #self.tuner = 0
+    self.tuner = 0
     #self.band = 0
     Screen.__init__(self, session)
     #self.session.nav.stopService() # try to disable foreground service
     self["Canvas"] = CanvasSource()
     self["Graph"] = CanvasSource()
-    self["myTuner"] = Label()
-    self["myFrequency"] = Label()
-    self["myBand"] = Label()
     self["myRedBtn"] = Label(_("Exit"))
     #self["myGreenBtn"] = Label(_("Start"))
     #self["myYellowBtn"] = Label(_("Tuner"))
@@ -67,7 +69,7 @@ class WB_Spectrum(Screen):
     {
       "red": self.close,
       "cancel": self.close,
-      "ok": self.drawSpectrum, # startAnalyser,
+      "ok": self.tuneToChannel, # startAnalyser,
 #      "green": self.drawSpectrum, # startAnalyser,
 #      "yellow": self.printList, #changeTuner,
 #      "blue": self.clearCanvas,
@@ -76,6 +78,49 @@ class WB_Spectrum(Screen):
       "up": self.channel_up,
       "down": self.channel_down,
     }, -1)
+    
+    
+    self.transponder = None
+    self.frontend = None
+    try:
+      if not self.openFrontend():
+        self.session.nav.stopService()
+        if not self.openFrontend():
+          if self.session.pipshown:
+            from Screens.InfoBar import InfoBar
+            InfoBar.instance and hasattr(InfoBar.instance, "showPiP") and InfoBar.instance.showPiP()
+            if not self.openFrontend():
+              self.frontend = None # in normal case this should not happen
+      self.tuner = Tuner(self.frontend)
+      self.createSetup()
+      self.retune()
+    except:
+      pass
+
+    
+    
+    res_mgr = eDVBResourceManager.getInstance()
+    if res_mgr:
+      print("RESMGR")
+      print(eDVBResourceManager.getInstance())
+      print(vals(eDVBResourceManager.getInstance()))
+      print(dir(eDVBResourceManager.getInstance()))
+      self.raw_channel = res_mgr.allocateRawChannel(0) #self.feid)
+      if self.raw_channel:
+        print("RAW CHANNEL")
+        self.frontend = self.raw_channel.getFrontend()
+        if self.frontend:
+          print("FRONTEND")
+            #return True
+    #return False
+    #self.tuner = feinfo and feinfo.getFrontendData()
+    
+    #fe_id = int(self.scan_nims.value)
+    self.raw_channel = eDVBResourceManager.getInstance().allocateRawChannel(0)
+    self.frontend = self.raw_channel.getFrontend()
+    
+    self.tuner = Tuner(self.frontend)
+      
         
   
     self.channelTablePlaces = {10491500 : 170, 10492750 : 284,  10493000 : 310,  10493250 : 336,  10493500 : 362,  10493750 : 388,  10494000 : 414,  10494250 : 440,  10494500 : 466,  10494750 : 492,  10495000 : 518,  10495250 : 544,  10495500 : 570,  10495750 : 596,  10496000 : 622,  10496250 : 648,  10496500 : 674,  10496750 : 700,  10497000 : 726,  10497250 : 752,  10497500 : 778,  10497750 : 804,  10498000 : 830,  10498250 : 856,  10498500 : 882,  10498750 : 908,  10499000 : 934,  10499250 : 960}
@@ -89,6 +134,21 @@ class WB_Spectrum(Screen):
     ]
     self.channelRow = [[390,6],[398,6],[406,6],[414,6],[390,18]]
     self.bbox()
+
+    def openFrontend(self):
+      res_mgr = eDVBResourceManager.getInstance()
+      if res_mgr:
+        print("RESMGR")
+        fe_id = int(self.scan_nims.value)
+        print("FE_ID = %d" % fe_id)
+        self.raw_channel = res_mgr.allocateRawChannel(fe_id)
+        if self.raw_channel:
+          print("RAW CHN")
+          self.frontend = self.raw_channel.getFrontend()
+          print("---GET FE----")
+          if self.frontend:
+            return True
+      return False
 
   def bbox(self):
     fg = RGB(255, 255, 255)
@@ -112,9 +172,7 @@ class WB_Spectrum(Screen):
 
     for row,channelRows in enumerate(self.channelTable):
       for channel in channelRows:
-        print(row)
         self.drawChannel(c, channel, row, cc)
-    #self.drawChannel(c, self.channelTable1500[0], 5, sc)
     self.drawChannel(c, self.channelTable[0][0], 0, sc)
     c.flush()
     self.updateSpectrumTimer = eTimer()
@@ -132,7 +190,7 @@ class WB_Spectrum(Screen):
     g.flush()
     g.fill(50,50,100,100,RGB(0,0,255)) 
     g.flush()
-    print(vars(g))
+    #print(vars(g))
     
   def channel_left(self):
     cc = RGB(150,150,150)
@@ -214,6 +272,39 @@ class WB_Spectrum(Screen):
     #print(vars(g))
     ws.close()
         
+  def tuneToChannel(self):
+    transponder = (
+          10497500,
+          333,
+          0,
+          2,
+          192,
+          0,
+          1,
+          0,
+          2,
+          -1,
+          1,
+          1,
+          0,
+          -1,
+          4096)
+#transponders = ((12515000, 22000000, eDVBFrontendParametersSatellite.FEC_5_6, 192,
+#                eDVBFrontendParametersSatellite.Polarisation_Horizontal, eDVBFrontendParametersSatellite.Inversion_Unknown,
+#                eDVBFrontendParametersSatellite.System_DVB_S, eDVBFrontendParametersSatellite.Modulation_QPSK,
+#                eDVBFrontendParametersSatellite.RollOff_alpha_0_35, eDVBFrontendParametersSatellite.Pilot_Off),
+#                (12070000, 27500000, eDVBFrontendParametersSatellite.FEC_3_4, 235,
+#                eDVBFrontendParametersSatellite.Polarisation_Horizontal, eDVBFrontendParametersSatellite.Inversion_Unknown,
+#                eDVBFrontendParametersSatellite.System_DVB_S, eDVBFrontendParametersSatellite.Modulation_QPSK,
+#                eDVBFrontendParametersSatellite.RollOff_alpha_0_35, eDVBFrontendParametersSatellite.Pilot_Off),
+#                (11727000, 28000000, eDVBFrontendParametersSatellite.FEC_7_8, 3592,
+#                eDVBFrontendParametersSatellite.Polarisation_Vertical, eDVBFrontendParametersSatellite.Inversion_Unknown,
+#                eDVBFrontendParametersSatellite.System_DVB_S, eDVBFrontendParametersSatellite.Modulation_QPSK,
+#                eDVBFrontendParametersSatellite.RollOff_alpha_0_35, eDVBFrontendParametersSatellite.Pilot_Off))
+    print("Tuning to Transponer")
+    self.tuner.tune(transponder)
+    print("tuned...")
+    self.transponder = transponder
         
         
 #  def startAnalyser(self):
