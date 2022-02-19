@@ -10,8 +10,10 @@ from Components.NimManager import nimmanager
 from Plugins.Plugin import PluginDescriptor
 from enigma import gFont, eTimer
 from enigma import RT_HALIGN_RIGHT
+from enigma import eServiceCenter, eServiceReference, pNavigation, getBestPlayableServiceReference, iPlayableService
+from ServiceReference import ServiceReference
 from Components.TuneTest import Tuner
-from Screens.ServiceScan import ServiceScan
+from Screens.ServiceScan import ServiceScan,ServiceScanSummary
 from Screens.ScanSetup import ScanSetup, buildTerTransponder
 from enigma import eDVBResourceManager, eDVBFrontendParametersSatellite, eDVBFrontendParametersTerrestrial, eDVBFrontendParametersATSC, iDVBFrontend
 
@@ -59,9 +61,9 @@ class WB_Spectrum(Screen):
     self["Canvas"] = CanvasSource()
     self["Graph"] = CanvasSource()
     self["myRedBtn"] = Label(_("Exit"))
-    #self["myGreenBtn"] = Label(_("Start"))
-    #self["myYellowBtn"] = Label(_("Tuner"))
-    #self["myBlueBtn"] = Label(_("Clear"))
+    self["myGreenBtn"] = Label(_("Select"))
+    self["myYellowBtn"] = Label(_("---"))
+    self["myBlueBtn"] = Label(_("***"))
     self["myLeftBtn"] = Label(_(" < "))
     self["myRightBtn"] = Label(_(" > "))
 #    self["myCallsign"] = Label(_("Baris DINC - TA7W/OH2UDS"))
@@ -82,46 +84,6 @@ class WB_Spectrum(Screen):
     
     self.transponder = None
     self.frontend = None
-    try:
-      if not self.openFrontend():
-        self.session.nav.stopService()
-        if not self.openFrontend():
-          if self.session.pipshown:
-            from Screens.InfoBar import InfoBar
-            InfoBar.instance and hasattr(InfoBar.instance, "showPiP") and InfoBar.instance.showPiP()
-            if not self.openFrontend():
-              self.frontend = None # in normal case this should not happen
-      self.tuner = Tuner(self.frontend)
-      self.createSetup()
-      self.retune()
-    except:
-      pass
-
-    
-    
-    res_mgr = eDVBResourceManager.getInstance()
-    if res_mgr:
-      print("RESMGR")
-      print(eDVBResourceManager.getInstance())
-      print(vals(eDVBResourceManager.getInstance()))
-      print(dir(eDVBResourceManager.getInstance()))
-      self.raw_channel = res_mgr.allocateRawChannel(0) #self.feid)
-      if self.raw_channel:
-        print("RAW CHANNEL")
-        self.frontend = self.raw_channel.getFrontend()
-        if self.frontend:
-          print("FRONTEND")
-            #return True
-    #return False
-    #self.tuner = feinfo and feinfo.getFrontendData()
-    
-    #fe_id = int(self.scan_nims.value)
-    self.raw_channel = eDVBResourceManager.getInstance().allocateRawChannel(0)
-    self.frontend = self.raw_channel.getFrontend()
-    
-    self.tuner = Tuner(self.frontend)
-      
-        
   
     self.channelTablePlaces = {10491500 : 170, 10492750 : 284,  10493000 : 310,  10493250 : 336,  10493500 : 362,  10493750 : 388,  10494000 : 414,  10494250 : 440,  10494500 : 466,  10494750 : 492,  10495000 : 518,  10495250 : 544,  10495500 : 570,  10495750 : 596,  10496000 : 622,  10496250 : 648,  10496500 : 674,  10496750 : 700,  10497000 : 726,  10497250 : 752,  10497500 : 778,  10497750 : 804,  10498000 : 830,  10498250 : 856,  10498500 : 882,  10498750 : 908,  10499000 : 934,  10499250 : 960}
     self.currentChannel = [0, 0]    #this variable will hold the selected (painted) channel row, column
@@ -135,20 +97,61 @@ class WB_Spectrum(Screen):
     self.channelRow = [[390,6],[398,6],[406,6],[414,6],[390,18]]
     self.bbox()
 
-    def openFrontend(self):
-      res_mgr = eDVBResourceManager.getInstance()
-      if res_mgr:
-        print("RESMGR")
-        fe_id = int(self.scan_nims.value)
-        print("FE_ID = %d" % fe_id)
-        self.raw_channel = res_mgr.allocateRawChannel(fe_id)
-        if self.raw_channel:
-          print("RAW CHN")
-          self.frontend = self.raw_channel.getFrontend()
-          print("---GET FE----")
-          if self.frontend:
-            return True
-      return False
+  def openFrontend(self):
+    res_mgr = eDVBResourceManager.getInstance()
+    if res_mgr:
+      print("RESMGR")
+      fe_id = 0 #int(self.scan_nims.value)
+      print("FE_ID = %d" % fe_id)
+      self.raw_channel = res_mgr.allocateRawChannel(fe_id)
+      if self.raw_channel:
+        print("RAW CHN")
+        self.frontend = self.raw_channel.getFrontend()
+        print("---GET FE----")
+        if self.frontend:
+          return True
+    return False
+
+  def startTuner(self):
+    self.frontend = None
+    try:
+      if not self.openFrontend():
+        print("before service")
+        self.session.nav.stopService()
+        if not self.openFrontend():
+          print("after service")
+          self.frontend = None # in normal case this should not happen
+      self.tuner = Tuner(self.frontend)
+      print("TUNER YARATILDI")
+#      self.createSetup()
+#      self.retune()
+    except:
+      pass
+
+
+
+#res_mgr = eDVBResourceManager.getInstance()
+#if res_mgr:
+ # print("RESMGR")
+ # print(eDVBResourceManager.getInstance())
+ # print(vals(eDVBResourceManager.getInstance()))
+ # print(dir(eDVBResourceManager.getInstance()))
+#  self.raw_channel = res_mgr.allocateRawChannel(0) #self.feid)
+#  if self.raw_channel:
+#    print("RAW CHANNEL")
+#    self.frontend = self.raw_channel.getFrontend()
+#    if self.frontend:
+#      print("FRONTEND")
+#        #return True
+##return False
+##self.tuner = feinfo and feinfo.getFrontendData()
+
+##fe_id = int(self.scan_nims.value)
+#self.raw_channel = eDVBResourceManager.getInstance().allocateRawChannel(0)
+#self.frontend = self.raw_channel.getFrontend()
+
+#self.tuner = Tuner(self.frontend)
+  
 
   def bbox(self):
     fg = RGB(255, 255, 255)
@@ -273,9 +276,16 @@ class WB_Spectrum(Screen):
     ws.close()
         
   def tuneToChannel(self):
+    #fe_id = int(self.scan_nims.value)
+    print("CURRENT CHANNEL [%d][%d] " % (self.currentChannel[0],self.currentChannel[1]))
+    print(self.channelTable[self.currentChannel[0]][self.currentChannel[1]])
+    Frequency = self.channelTable[self.currentChannel[0]][self.currentChannel[1]][0]
+    Symbol_rate = self.channelTable[self.currentChannel[0]][self.currentChannel[1]][1]
+    
     transponder = (
-          10497500,
-          333,
+          Frequency, # 10491500,
+          Symbol_rate, #1500,
+          0,
           0,
           2,
           192,
@@ -285,10 +295,11 @@ class WB_Spectrum(Screen):
           2,
           -1,
           1,
-          1,
           0,
           -1,
           4096)
+    
+#10493500, 333, 0, 0, 2, 192, 0, 1, 0, 2, -1, 1, 0, -1, 4096    
 #transponders = ((12515000, 22000000, eDVBFrontendParametersSatellite.FEC_5_6, 192,
 #                eDVBFrontendParametersSatellite.Polarisation_Horizontal, eDVBFrontendParametersSatellite.Inversion_Unknown,
 #                eDVBFrontendParametersSatellite.System_DVB_S, eDVBFrontendParametersSatellite.Modulation_QPSK,
@@ -301,10 +312,128 @@ class WB_Spectrum(Screen):
 #                eDVBFrontendParametersSatellite.Polarisation_Vertical, eDVBFrontendParametersSatellite.Inversion_Unknown,
 #                eDVBFrontendParametersSatellite.System_DVB_S, eDVBFrontendParametersSatellite.Modulation_QPSK,
 #                eDVBFrontendParametersSatellite.RollOff_alpha_0_35, eDVBFrontendParametersSatellite.Pilot_Off))
-    print("Tuning to Transponer")
-    self.tuner.tune(transponder)
-    print("tuned...")
-    self.transponder = transponder
+
+
+#    tlist = []
+#    feid = 0
+#    flags =0
+#    networkid = 0
+#    ScanSetup.addSatTransponder(self, tlist,
+#                      Frequency, #10491500, # frequency
+#                      Symbol_rate, #1500, # sr
+#                      0, # pol
+#                      0, # fec
+#                      2, # inversion
+#                      192,
+#                      0, # system
+#                      1, # modulation
+#                      0, # rolloff
+#                      2, # pilot
+#                      -1,# input stream id
+#                      1,# pls mode
+#                      0, # pls code
+#                      -1, # t2mi_plp_id
+#                      4096 # t2mi_pid
+#              )
+#    self.session.openWithCallback(self.startScanCallback, ServiceScan, [{"transponders": tlist, "feid": feid, "flags": flags, "networkid": networkid}])
+
+    ref = self.session.nav.getCurrentlyPlayingServiceReference()
+    print("REFERANS--------------------------")
+    print("playing now ->", ref and ref.toString())
+    ref2 = self.session.nav.getCurrentlyPlayingServiceOrGroup()
+    print("playing now2 ->", ref2 and ref2.toString())
+    #print(self.playService())
+
+    defaultSat = {                                                                                                                                
+      "orbpos": 192,                                                                                                                        
+      "system": eDVBFrontendParametersSatellite.System_DVB_S,                                                                               
+      "frequency": 11836,                                                                                                                   
+      "inversion": eDVBFrontendParametersSatellite.Inversion_Unknown,                                                                       
+      "symbolrate": 27500,                                                                                                                  
+      "polarization": eDVBFrontendParametersSatellite.Polarisation_Horizontal,                                                              
+      "fec": eDVBFrontendParametersSatellite.FEC_Auto,                                                                                      
+      "fec_s2": eDVBFrontendParametersSatellite.FEC_9_10,                                                                                   
+      "modulation": eDVBFrontendParametersSatellite.Modulation_QPSK                                                                         
+    }  
+
+#    self.service = self.session.nav.getCurrentService()
+#    if self.service is not None:                                                                                                                  
+#      self.feinfo = self.service.frontendInfo()                                                                                             
+#      frontendData = self.feinfo and self.feinfo.getAll(True)     
+    
+    #current_service = self.servicelist.getCurrentSelection()
+    #nref = self.resolveAlternatePipService(current_service)
+    playingref = self.session.nav.getCurrentlyPlayingServiceReference()
+
+#    print("Tuning to Transponer")
+#    self.startTuner()        
+#    self.tuner.tune(transponder)
+#    print("tuned...")
+#    self.transponder = transponder
+
+
+    self.playService(playingref)
+
+  def playService(self, ref, imitation=False):
+    if ref:
+      print("PLAYINGGGGGG.......")
+      self.qo100service = eServiceCenter.getInstance().play(ref)
+      if self.qo100service:
+        print("STARTINGGG")
+        self.qo100service.start()
+#self.service = self.session.nav.getCurrentlyPlayingServiceReference()        
+        service_name = ServiceReference(ref).getServiceName()
+        service_info = ServiceReference(ref).info()
+        print("Service Name %s " % service_name)
+        print("Service Info %s " % service_info)
+        self["myYellowBtn"].setText(service_name)
+        #if self.video_state is False:
+        #  self["video"].show()
+        #  self.video_state = True
+        #if not imitation:
+          #if hasattr(self, "dishpipDialog") and self.dishpipDialog is not None:
+          #        self.dishpipDialog.serviceStarted(ref=ref, pipservice=self.pipservice)
+          #if "%3a//" in ref.toString():
+          #        tunername = _('Stream')
+          #else:
+          #        tunername = self.getTunerName()
+          #self["NowTuner"].setText(tunername)
+        #self.currentService = self.servicelist.getCurrentSelection()
+        #self.currentServiceReference = ref
+        #self.servicelist.servicelist.setPlayableIgnoreService(ref)
+        return True
+      #else:
+      #  self.pipservice = None
+      #  self.currentService = None
+      #  self.currentServiceReference = None
+      #  self.setDishpipDialog()
+      #  self.setPlayableService()
+      #  self.PipServiceAvailable = False
+      #  self.standartServiceAvailable = True
+    return False
+
+
+
+
+
+
+
+
+       
+  def startScanCallback(self, answer=None):
+    print("FONKSIYON CALLBACK")
+    if answer:
+      print("ANSWER")
+      self.doCloseRecursive()
+  
+  def doCloseRecursive(self):
+#    if self.session.postScanService and self.frontend:
+#      self.frontend = None
+#      self.raw_channel = None
+#    self.close(True)
+    pass
+       
+       
         
         
 #  def startAnalyser(self):
