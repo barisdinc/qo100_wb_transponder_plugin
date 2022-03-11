@@ -16,9 +16,10 @@ from Components.TuneTest import Tuner
 from Screens.ServiceScan import ServiceScan,ServiceScanSummary
 from Screens.ScanSetup import ScanSetup, buildTerTransponder
 from enigma import eDVBResourceManager, eDVBFrontendParametersSatellite, eDVBFrontendParametersTerrestrial, eDVBFrontendParametersATSC, iDVBFrontend
-
+from Components.ServiceList import ServiceList
     
 from websocket import create_connection
+import pprint
 
 def RGB(r,g,b):
 	return (r<<16)|(g<<8)|b
@@ -73,7 +74,7 @@ class WB_Spectrum(Screen):
       "cancel": self.close,
       "ok": self.tuneToChannel, # startAnalyser,
 #      "green": self.drawSpectrum, # startAnalyser,
-#      "yellow": self.printList, #changeTuner,
+      "yellow": self.videoReload, #changeTuner,
 #      "blue": self.clearCanvas,
       "right": self.channel_right,
       "left": self.channel_left,
@@ -81,15 +82,17 @@ class WB_Spectrum(Screen):
       "down": self.channel_down,
     }, -1)
     
-    
+    self["list"] = ServiceList(self)
+    self.servicelist = self["list"]
+
     self.transponder = None
     self.frontend = None
   
     self.channelTablePlaces = {10491500 : 170, 10492750 : 284,  10493000 : 310,  10493250 : 336,  10493500 : 362,  10493750 : 388,  10494000 : 414,  10494250 : 440,  10494500 : 466,  10494750 : 492,  10495000 : 518,  10495250 : 544,  10495500 : 570,  10495750 : 596,  10496000 : 622,  10496250 : 648,  10496500 : 674,  10496750 : 700,  10497000 : 726,  10497250 : 752,  10497500 : 778,  10497750 : 804,  10498000 : 830,  10498250 : 856,  10498500 : 882,  10498750 : 908,  10499000 : 934,  10499250 : 960}
     self.currentChannel = [0, 0]    #this variable will hold the selected (painted) channel row, column
     self.channelTable = [\
-      [[10492750,250,25],[10493250,250,25],[10493750,250,25],[10494250,250,25],[10494750,250,25],[10495250,250,25],[10495750,250,25],[10496250,250,25],[10496750,250,25],[10497250,250,25],[10497750,250,25],[10498250,250,25],[10498750,250,25],[10499250,250,25]],\
-      [[10492750,333,33],[10493250,333,33],[10493750,333,33],[10494250,333,33],[10494750,333,33],[10495250,333,33],[10495750,333,33],[10496250,333,33],[10496750,333,33],[10497250,333,33],[10497750,333,33],[10498250,333,33],[10498750,333,33],[10499250,333,33]],\
+      [[10492750,250,20],[10493000,250,20],[10493250,250,20],[10493500,250,20],[10493750,250,20],[10494000,250,20],[10494250,250,20],[10494500,250,20],[10494750,250,20],[10495000,250,20],[10495250,250,20],[10495500,250,20],[10495750,250,20],[10496000,250,20],[10496250,250,20],[10496500,250,20],[10496750,250,20],[10497000,250,20],[10497250,250,20],[10497500,250,20],[10497750,250,20],[10498000,250,20],[10498250,250,20],[10498500,250,20],[10498750,250,20],[10499000,250,20],[10499250,250,20]],\
+      [[10492750,333,25],[10493000,333,25],[10493250,333,25],[10493500,333,25],[10493750,333,25],[10494000,333,25],[10494250,333,25],[10494500,333,25],[10494750,333,25],[10495000,333,25],[10495250,333,25],[10495500,333,25],[10495750,333,25],[10496000,333,25],[10496250,333,25],[10496500,333,25],[10496750,333,25],[10497000,333,25],[10497250,333,25],[10497500,333,25],[10497750,333,25],[10498000,333,25],[10498250,333,25],[10498500,333,25],[10498750,333,25],[10499000,333,25],[10499250,333,25]],\
       [[10492750,500,50],[10493250,500,50],[10493750,500,50],[10494250,500,50],[10494750,500,50],[10495250,500,50],[10495750,500,50],[10496250,500,50],[10496750,500,50],[10497250,500,50],[10497750,500,50],[10498250,500,50],[10498750,500,50],[10499250,500,50]],\
       [[10493250,1000,150],[10494750,1000,150],[10496250,1000,150]],\
       [[10491500,1500,160]]\
@@ -209,7 +212,7 @@ class WB_Spectrum(Screen):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
-    if (self.currentChannel[1] > 12): 
+    if (self.currentChannel[1] > 25): 
           self.currentChannel[1] = 0
     else:
       if self.currentChannel[0] == 4:
@@ -224,26 +227,27 @@ class WB_Spectrum(Screen):
     sc = RGB(255,255,0)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
     if self.currentChannel[0] > 0:
+      if self.currentChannel[0] == 2:
+        self.currentChannel[1] = 2*self.currentChannel[1]  
       if self.currentChannel[0] == 3:
         self.currentChannel[1] = 3*self.currentChannel[1]+1
       self.currentChannel[0] -= 1
-    #else:
-      #self.currentChannel[0] = 3
-      #self.currentChannel[1] = int(self.currentChannel[1]/3)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
   
   def channel_down(self):
     cc = RGB(150,150,150)
     sc = RGB(255,255,0)
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , cc)
-    if self.currentChannel[1] > 8:
-      if (self.currentChannel[0] < 2): 
+    if self.currentChannel[0] == 0:
+      self.currentChannel[0] += 1
+    elif self.currentChannel[0] == 1:
+      self.currentChannel[0] += 1
+      self.currentChannel[1] = int(self.currentChannel[1]/2)
+    else:  
+      if self.currentChannel[1] < 9: 
+        self.currentChannel[1] = int(self.currentChannel[1]/3)        
         self.currentChannel[0] += 1
-    else:
-      if (self.currentChannel[0] < 3): 
-        self.currentChannel[0] += 1
-        if self.currentChannel[0] == 3:
-          self.currentChannel[1] = int(self.currentChannel[1]/3)
+
     self.drawChannel(self["Canvas"], self.channelTable[self.currentChannel[0]][self.currentChannel[1]], self.currentChannel[0] , sc)
 
     
@@ -364,28 +368,69 @@ class WB_Spectrum(Screen):
     #current_service = self.servicelist.getCurrentSelection()
     #nref = self.resolveAlternatePipService(current_service)
     playingref = self.session.nav.getCurrentlyPlayingServiceReference()
-
-#    print("Tuning to Transponer")
-#    self.startTuner()        
-#    self.tuner.tune(transponder)
-#    print("tuned...")
-#    self.transponder = transponder
-
-
+    print("Tuning to Transponer")
+    self.startTuner()        
+    self.tuner.tune(transponder)
+    print("tuned...")
+    self.transponder = transponder
     self.playService(playingref)
+
+
+  def videoReload(self):
+    #fav = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 1) || (type == 17) || (type == 195) || (type == 25) FROM BOUQUET "bouquets.tv" ORDER BY bouquet')
+    #self["SwitchService"] = ServiceList(fav, command_func = self.zapTo, validate_commands=False)
+    #self["ServiceList"] = ServiceList(fav, command_func = self.getServiceList, validate_commands=False)
+    #print("FAV ")
+    #print(fav.__str__())#, ser_this, 1, 80, 10)
+    #pprint(self["SwitchService"], ser_this, 1, 80, 10)
+    #pprint(self["ServiceList"], ser_this, 1, 80, 10)
+
+#1:0:1:1:1:FF01:C02903:0:0:0:        -> 10.499.000 @ 333
+#1:0:1:1:1:FF01:C028FD:0:0:0:        -> 10.493.000 @ 500
+#1:0:1:1:821D:14D:1040000:0:0:0      -> 10.496.750 @ 333
+#1:0:1:1:8222:14D:1040000:0:0:0:
+#  1:0:1:1:1:FF01:C028FD:0:0:0: ????
+  
+#1:0:16:1:AAAA:FFFF:C028FC:0:0:0:    -> 10.491.500 @ 1500 A71A
+#0001:00c028fb:aaaa:ffff:22:0:0   00c028fb:aaaa:ffff   10491500:1500000:0:0:192:2:0      1:0:16:1:AAAA:FFFF:C028FB:0:0:0:   
+
+#
+
+#lame
+#0001:00c02902:0001:ff01:1:0:0  IZ0JNU  p:2110_JNU_stef,f:40                                    1:0:1:1:1:FF01:C02902:0:0:0:
+#0001:00c028fb:aaaa:ffff:22:0:0 A71A    p:QARS,c:000101,c:010102,c:030103,c:050001,f:40         1:0:16:1:1:FFFF:C028FB:0:0:0:
+       
+    playingref = self.session.nav.getCurrentlyPlayingServiceReference()
+    print("playingref =")
+    print(ServiceReference(playingref).__str__())
+#    self.session.nav.playService(playingref)
+#    #self.playService(playingref)
+    a71aREF = eServiceReference('1:0:1:1:1:FF01:C028FD:0:0:0:')
+    self.session.nav.playService(a71aREF)
+
+
+  def zapTo(self):
+    pass
+
+#def zapToService(self, service):                                                                                                               
+#                if not service is None:                                                                                                                
+#                        self.servicelist.setCurrentSelection(service) #select the service in servicelist                                               
+#                        self.servicelist.zap()
+    
+    
 
   def playService(self, ref, imitation=False):
     if ref:
-      print("PLAYINGGGGGG.......")
       self.qo100service = eServiceCenter.getInstance().play(ref)
       if self.qo100service:
-        print("STARTINGGG")
         self.qo100service.start()
-#self.service = self.session.nav.getCurrentlyPlayingServiceReference()        
         service_name = ServiceReference(ref).getServiceName()
         service_info = ServiceReference(ref).info()
+        service_str  = ServiceReference(ref).__str__()
         print("Service Name %s " % service_name)
         print("Service Info %s " % service_info)
+        print("Service Str %s " % service_str)
+        
         self["myYellowBtn"].setText(service_name)
         #if self.video_state is False:
         #  self["video"].show()
